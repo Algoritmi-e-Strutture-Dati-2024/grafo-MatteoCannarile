@@ -1,0 +1,214 @@
+Grafo che rappresenta una rete di città: 
+
+Nodi: Taranto Brindisi Bari Lecce Foggia 
+
+Archi: 
+Taranto Brindisi (60km)
+Lecce Foggia (200km) 
+Bari Taranto (102km) 
+Bari Foggia (136km) 
+Taranto Lecce (105km) 
+Bari Brindisi (119km)
+
+#include <iostream>
+#include <string>
+
+#define MAX_NODI 100
+#define INF 1000000000
+
+using namespace std;
+
+template <typename T>
+class Grafo {
+private:
+    T nodi[MAX_NODI];
+    int matriceAdiacenza[MAX_NODI][MAX_NODI];
+    bool esisteNodo[MAX_NODI];
+    int numeroNodi;
+
+public:
+    Grafo() {
+        numeroNodi = 0;
+        for (int i = 0; i < MAX_NODI; ++i) {
+            esisteNodo[i] = false;
+            for (int j = 0; j < MAX_NODI; ++j) {
+                matriceAdiacenza[i][j] = INF;
+            }
+            matriceAdiacenza[i][i] = 0;
+        }
+    }
+
+    void aggiungiNodo(const T& nodo) {
+        if (numeroNodi >= MAX_NODI) {
+            cout << "Errore: numero massimo di nodi raggiunto.\n";
+            return;
+        }
+        for (int i = 0; i < numeroNodi; ++i) {
+            if (esisteNodo[i] && nodi[i] == nodo) {
+                cout << "Errore: il nodo esiste già.\n";
+                return;
+            }
+        }
+        nodi[numeroNodi] = nodo;
+        esisteNodo[numeroNodi] = true;
+        numeroNodi++;
+    }
+
+    void aggiungiArco(const T& sorgente, const T& destinazione, int peso) {
+        int indiceSorgente = trovaIndice(sorgente);
+        int indiceDestinazione = trovaIndice(destinazione);
+
+        if (indiceSorgente == -1 || indiceDestinazione == -1) {
+            cout << "Errore: uno o entrambi i nodi non esistono.\n";
+            return;
+        }
+        matriceAdiacenza[indiceSorgente][indiceDestinazione] = peso;
+    }
+
+    void rimuoviArco(const T& sorgente, const T& destinazione) {
+        int indiceSorgente = trovaIndice(sorgente);
+        int indiceDestinazione = trovaIndice(destinazione);
+
+        if (indiceSorgente == -1 || indiceDestinazione == -1) {
+            cout << "Errore: uno o entrambi i nodi non esistono.\n";
+            return;
+        }
+        matriceAdiacenza[indiceSorgente][indiceDestinazione] = INF;
+    }
+
+    void rimuoviNodo(const T& nodo) {
+        int indice = trovaIndice(nodo);
+        if (indice == -1) {
+            cout << "Errore: il nodo non esiste.\n";
+            return;
+        }
+
+        // Rimuovi tutti gli archi associati al nodo
+        for (int i = 0; i < numeroNodi; ++i) {
+            matriceAdiacenza[indice][i] = INF;  // Rimuovi archi uscenti
+            matriceAdiacenza[i][indice] = INF;  // Rimuovi archi entranti
+        }
+
+        // Rimuovi il nodo
+        esisteNodo[indice] = false;
+        for (int i = indice; i < numeroNodi - 1; ++i) {
+            nodi[i] = nodi[i + 1];
+            esisteNodo[i] = esisteNodo[i + 1];
+            for (int j = 0; j < numeroNodi; ++j) {
+                matriceAdiacenza[i][j] = matriceAdiacenza[i + 1][j];
+                matriceAdiacenza[j][i] = matriceAdiacenza[j][i + 1];
+            }
+        }
+        numeroNodi--;
+    }
+
+    void nodiAdiacenti(const T& nodo) const {
+        int indice = trovaIndice(nodo);
+        if (indice == -1) {
+            cout << "Errore: il nodo non esiste.\n";
+            return;
+        }
+        cout << "Nodi adiacenti a " << nodo << ": ";
+        for (int i = 0; i < numeroNodi; ++i) {
+            if (esisteNodo[i] && matriceAdiacenza[indice][i] != INF) {
+                cout << nodi[i] << " (peso: " << matriceAdiacenza[indice][i] << " km) ";
+            }
+        }
+        cout << "\n";
+    }
+
+    void stampa() const {
+        cout << "Matrice di Adiacenza:\n";
+        for (int i = 0; i < numeroNodi; ++i) {
+            if (!esisteNodo[i]) continue;
+
+            for (int j = 0; j < numeroNodi; ++j) {
+                if (!esisteNodo[j]) continue;
+
+                if (matriceAdiacenza[i][j] == INF) {
+                    cout << "INF ";
+                } else {
+                    cout << matriceAdiacenza[i][j] << " ";
+                }
+            }
+            cout << "\n";
+        }
+    }
+
+    bool verificaNodo(const T& nodo) const {
+        return trovaIndice(nodo) != -1;
+    }
+
+    bool verificaArco(const T& sorgente, const T& destinazione) const {
+        int indiceSorgente = trovaIndice(sorgente);
+        int indiceDestinazione = trovaIndice(destinazione);
+
+        if (indiceSorgente == -1 || indiceDestinazione == -1) {
+            return false;
+        }
+        return matriceAdiacenza[indiceSorgente][indiceDestinazione] != INF;
+    }
+
+private:
+    int trovaIndice(const T& nodo) const {
+        for (int i = 0; i < numeroNodi; ++i) {
+            if (esisteNodo[i] && nodi[i] == nodo) {
+                return i;
+            }
+        }
+        return -1;
+    }
+};
+
+int main() {
+    Grafo<string> grafo;
+
+    grafo.aggiungiNodo("Taranto");
+    grafo.aggiungiNodo("Brindisi");
+    grafo.aggiungiNodo("Bari");
+    grafo.aggiungiNodo("Lecce");
+    grafo.aggiungiNodo("Foggia");
+
+    grafo.aggiungiArco("Taranto", "Lecce", 105);
+	grafo.aggiungiArco("Lecce", "Taranto", 105);
+    grafo.aggiungiArco("Lecce", "Foggia", 200);
+	grafo.aggiungiArco("Foggia", "Lecce", 200);
+    grafo.aggiungiArco("Foggia", "Bari", 136);
+	grafo.aggiungiArco("Bari", "Foggia", 136);
+    grafo.aggiungiArco("Taranto", "Bari", 102);
+	grafo.aggiungiArco("Bari", "Taranto", 102);
+    grafo.aggiungiArco("Brindisi", "Bari", 119);
+	grafo.aggiungiArco("Bari", "Brindisi", 119);
+	grafo.aggiungiArco("Brindisi", "Lecce", 40);
+	grafo.aggiungiArco("Lecce", "Brindisi", 40);
+	grafo.aggiungiArco("Brindisi", "Taranto", 60);
+	grafo.aggiungiArco("Taranto", "Brindisi", 60);
+
+    grafo.stampa();
+
+    grafo.nodiAdiacenti("Taranto");
+
+    grafo.nodiAdiacenti("Lecce");
+
+    if (grafo.verificaArco("Bari", "Taranto")) {
+        cout << "Esiste un arco tra Bari e Taranto.\n";
+    } else {
+        cout << "Non esiste un arco tra Bari e Taranto.\n";
+    }
+
+    if (grafo.verificaArco("Lecce", "Foggia")) {
+        cout << "Esiste un arco tra Lecce e Foggia.\n";
+    } else {
+        cout << "Non esiste un arco tra Lecce e Foggia.\n";
+    }
+
+    grafo.rimuoviArco("Bari", "Foggia");
+    cout << "Dopo aver rimosso l'arco tra Bari e Foggia:\n";
+    grafo.stampa();
+
+    grafo.rimuoviNodo("Foggia");
+    cout << "Dopo aver rimosso il nodo Foggia:\n";
+    grafo.stampa();
+
+    return 0;
+}
